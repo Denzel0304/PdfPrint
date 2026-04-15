@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF 일괄 인쇄 - 완전 해결판</title>
+    <title>PDF 일괄 인쇄 - 최종 완성</title>
     <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -60,7 +60,7 @@
         <ul id="file-list"></ul>
     </main>
 
-    <div id="debug-console">--- 시스템 로그 대기 중 (이미지 렌더링 모드) ---</div>
+    <div id="debug-console">--- 시스템 로그 대기 중 (최종 최적화 모드) ---</div>
 
     <script>
         lucide.createIcons();
@@ -116,25 +116,24 @@
         }
 
         async function processAndPrint() {
-            log("강제 렌더링 인쇄 시작... (보안 무력화 시도)");
+            log("인쇄 프로세스 시작 (이미지 렌더링 방식)...");
             printBtn.disabled = true;
             printBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> 페이지 그리는 중...';
             lucide.createIcons();
 
             try {
+                // 1. 모든 페이지를 이미지로 렌더링하여 임시 PDF 생성
                 const mergedPdf = await PDFLib.PDFDocument.create();
                 
                 for (const fileObj of selectedFiles) {
-                    log(`${fileObj.data.name} 분석 중...`);
+                    log(`${fileObj.data.name} 처리 중...`);
                     const arrayBuffer = await fileObj.data.arrayBuffer();
                     const loadingTask = pdfjsLib.getDocument({data: arrayBuffer});
                     const pdf = await loadingTask.promise;
                     
-                    log(`${fileObj.data.name}: 총 ${pdf.numPages}페이지 추출 시작`);
-
                     for (let i = 1; i <= pdf.numPages; i++) {
                         const page = await pdf.getPage(i);
-                        const viewport = page.getViewport({scale: 2.0}); // 고화질을 위해 2배 확대 렌더링
+                        const viewport = page.getViewport({scale: 2.0}); // 고품질 2배율
                         
                         const canvas = document.createElement('canvas');
                         const context = canvas.getContext('2d');
@@ -143,17 +142,22 @@
 
                         await page.render({canvasContext: context, viewport: viewport}).promise;
                         
-                        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                        const img = await mergedPdf.embedImg(imgData);
+                        // 이미지를 JPEG 바이너리로 변환
+                        const imgDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                        const imgBytes = await fetch(imgDataUrl).then(res => res.arrayBuffer());
+                        
+                        // 수정된 부분: embedJpg 사용
+                        const img = await mergedPdf.embedJpg(imgBytes);
                         
                         const newPage = mergedPdf.addPage([viewport.width, viewport.height]);
                         newPage.drawImage(img, { x: 0, y: 0, width: viewport.width, height: viewport.height });
                     }
-                    log(`${fileObj.data.name} 처리 완료`);
+                    log(`${fileObj.data.name} 완료`);
                 }
 
+                // 2. 인쇄 매수 적용
                 const copyCount = parseInt(document.getElementById('copy-count').value) || 1;
-                log(`최종 병합 및 매수(${copyCount}) 적용 중...`);
+                log(`최종 문서 생성 (매수: ${copyCount})...`);
                 
                 const finalPdf = await PDFLib.PDFDocument.create();
                 const mergedPagesIndices = mergedPdf.getPageIndices();
@@ -166,13 +170,13 @@
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
                 
-                log("모든 과정 완료! 새 창에서 내용을 확인하세요.");
+                log("인쇄 준비 완료. 새 창을 확인하세요.");
                 window.open(url, '_blank');
                 setTimeout(() => URL.revokeObjectURL(url), 60000);
 
             } catch (err) {
-                log(`<span style="color:red;">치명적 오류: ${err.message}</span>`);
-                alert("인쇄 실패. 로그를 확인하세요.");
+                log(`<span style="color:red;">오류: ${err.message}</span>`);
+                console.error(err);
             } finally {
                 printBtn.disabled = false;
                 printBtn.innerHTML = '<i data-lucide="layers"></i> 일괄 인쇄 시작';
