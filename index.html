@@ -30,28 +30,28 @@
             min-height: 100vh;
         }
 
+        /* 6. 헤더 중앙 정렬 */
         header {
             width: 100%;
             max-width: 800px;
-            padding: 40px 20px 10px;
+            padding: 40px 20px 20px;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
         }
-
         .logo { display: flex; align-items: center; gap: 12px; font-size: 1.5rem; font-weight: 700; color: #fff; }
 
         main { width: 100%; max-width: 800px; padding: 20px; box-sizing: border-box; }
 
-        /* 진행바 섹션 */
+        /* 진행바 스타일 */
         .progress-container {
             width: 100%;
-            height: 6px;
+            height: 4px;
             background: #2a2a2a;
             border-radius: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             overflow: hidden;
-            display: none; /* 평소엔 숨김 */
+            display: none;
         }
         #progress-bar {
             width: 0%;
@@ -59,54 +59,58 @@
             background: var(--accent-color);
             transition: width 0.3s ease;
         }
+        /* 2. 진행 정보 텍스트 간소화 */
         #progress-text {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--accent-color);
-            margin-bottom: 8px;
-            text-align: right;
+            margin-bottom: 6px;
+            text-align: center;
             display: none;
         }
 
+        /* 5. 버튼 레이아웃: 3개 동일 크기 가로 배치 */
         .controls {
-            display: flex; gap: 12px; margin-bottom: 30px; background: var(--card-bg);
-            padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);
-            align-items: center;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
         }
 
         button {
-            cursor: pointer; border: none; border-radius: 8px; padding: 10px 20px;
-            font-weight: 600; display: flex; align-items: center; gap: 8px; transition: all 0.2s;
-            font-size: 0.95rem;
+            cursor: pointer; border: none; border-radius: 8px; height: 45px;
+            font-weight: 600; display: flex; align-items: center; justify-content: center;
+            gap: 8px; transition: all 0.2s; font-size: 0.9rem; white-space: nowrap;
         }
 
         .btn-load { background-color: var(--pastel-green); color: #1a3d1a; }
-        .btn-load:hover { filter: brightness(0.9); }
-        
         .btn-reset { background-color: transparent; color: var(--reset-color); border: 1px solid var(--reset-color); }
-        .btn-reset:hover { background-color: var(--reset-color); color: white; }
-
-        .btn-print { background-color: var(--accent-color); color: white; margin-left: auto; }
+        /* 3. 버튼 명칭 변경 */
+        .btn-print { background-color: var(--accent-color); color: white; }
         .btn-print:disabled { background-color: #444; color: #888; cursor: not-allowed; }
 
-        /* 파일 목록 스타일 수정 */
+        /* 4. 파일 목록 높이 최적화 */
         #file-list { list-style: none; padding: 0; margin: 0; }
         .file-item {
-            background: var(--card-bg); margin-bottom: 12px; padding: 18px;
-            border-radius: 10px; display: flex; align-items: flex-start;
+            background: var(--card-bg); margin-bottom: 8px; padding: 10px 15px;
+            border-radius: 8px; display: flex; align-items: center;
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            min-height: 40px; /* 동적 높이를 위해 최소 높이만 지정 */
         }
 
-        .handle { cursor: grab; margin-right: 15px; color: #555; padding-top: 2px; }
+        .handle { cursor: grab; margin-right: 12px; color: #444; display: flex; align-items: center; }
         .file-info { 
             flex-grow: 1; 
-            font-size: 0.95rem; 
-            line-height: 1.5;
-            word-break: break-all; /* 파일명 줄바꿈 허용 */
-            color: #ccc;
+            font-size: 0.85rem; 
+            line-height: 1.4;
+            word-break: break-all;
+            color: #bbb;
             padding-right: 10px;
         }
-        .btn-remove { background: transparent; color: #666; padding: 5px; margin-top: -5px; }
+        .btn-remove { background: transparent; color: #555; padding: 4px; cursor: pointer; border: none; }
         .btn-remove:hover { color: var(--reset-color); }
 
         #file-input { display: none; }
@@ -121,14 +125,14 @@
     </header>
 
     <main>
-        <div id="progress-text">준비 중...</div>
+        <div id="progress-text">진행 중</div>
         <div class="progress-container" id="progress-container">
             <div id="progress-bar"></div>
         </div>
 
         <div class="controls">
             <button class="btn-load" onclick="document.getElementById('file-input').click()">
-                <i data-lucide="file-plus"></i> PDF 불러오기
+                <i data-lucide="file-plus"></i> 불러오기
             </button>
             <input type="file" id="file-input" multiple accept=".pdf">
 
@@ -137,7 +141,7 @@
             </button>
 
             <button class="btn-print" id="print-btn" onclick="processAndPrint()" disabled>
-                <i data-lucide="printer"></i> 일괄 인쇄 시작
+                <i data-lucide="printer"></i> 일괄 인쇄
             </button>
         </div>
 
@@ -156,7 +160,6 @@
         const progressContainer = document.getElementById('progress-container');
         const progressText = document.getElementById('progress-text');
 
-        // 파일 목록 순서 변경 기능
         new Sortable(fileListElement, {
             handle: '.handle', animation: 150,
             onEnd: () => {
@@ -181,9 +184,9 @@
                 li.className = 'file-item';
                 li.setAttribute('data-id', f.id);
                 li.innerHTML = `
-                    <div class="handle"><i data-lucide="menu"></i></div>
+                    <div class="handle"><i data-lucide="grip-vertical" style="width:16px;"></i></div>
                     <div class="file-info">${f.data.name}</div>
-                    <button class="btn-remove" onclick="removeFile('${f.id}')"><i data-lucide="trash-2"></i></button>
+                    <button class="btn-remove" onclick="removeFile('${f.id}')"><i data-lucide="x" style="width:18px;"></i></button>
                 `;
                 fileListElement.appendChild(li);
             });
@@ -196,20 +199,18 @@
             renderList();
         }
 
-        // 초기화 함수
+        // 1. 확인창 없이 즉시 초기화
         function resetApp() {
-            if(confirm("목록을 비우고 초기화하시겠습니까?")) {
-                selectedFiles = [];
-                renderList();
-                progressContainer.style.display = 'none';
-                progressText.style.display = 'none';
-                progressBar.style.width = '0%';
-            }
+            selectedFiles = [];
+            renderList();
+            progressContainer.style.display = 'none';
+            progressText.style.display = 'none';
+            progressBar.style.width = '0%';
         }
 
         async function processAndPrint() {
             printBtn.disabled = true;
-            printBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> 처리 중...';
+            printBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> 처리 중';
             
             progressContainer.style.display = 'block';
             progressText.style.display = 'block';
@@ -219,29 +220,23 @@
                 const mergedPdf = await PDFLib.PDFDocument.create();
                 const A4_WIDTH = 595.28;
                 const A4_HEIGHT = 841.89;
-
                 const totalFiles = selectedFiles.length;
                 
                 for (let fIdx = 0; fIdx < totalFiles; fIdx++) {
                     const fileObj = selectedFiles[fIdx];
-                    
-                    // 진행바 업데이트
                     const percent = Math.round(((fIdx) / totalFiles) * 100);
                     progressBar.style.width = `${percent}%`;
-                    progressText.innerText = `분석 중: ${fileObj.data.name} (${fIdx + 1}/${totalFiles})`;
 
                     const arrayBuffer = await fileObj.data.arrayBuffer();
                     const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
                     
                     for (let i = 1; i <= pdf.numPages; i++) {
                         const page = await pdf.getPage(i);
-                        const viewport = page.getViewport({scale: 2.2}); // 화질 최적화
-                        
+                        const viewport = page.getViewport({scale: 2.2});
                         const canvas = document.createElement('canvas');
                         const context = canvas.getContext('2d');
                         canvas.height = viewport.height;
                         canvas.width = viewport.width;
-
                         await page.render({canvasContext: context, viewport: viewport}).promise;
                         
                         const imgDataUrl = canvas.toDataURL('image/jpeg', 0.9);
@@ -254,8 +249,6 @@
                 }
 
                 progressBar.style.width = `100%`;
-                progressText.innerText = `병합 완료! 인쇄 창을 호출합니다.`;
-
                 const pdfBytes = await mergedPdf.save();
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
@@ -265,8 +258,7 @@
                     iframe = document.createElement('iframe');
                     iframe.id = 'print-iframe';
                     iframe.style.position = 'fixed';
-                    iframe.style.width = '0';
-                    iframe.style.height = '0';
+                    iframe.style.width = '0'; iframe.style.height = '0';
                     iframe.style.border = 'none';
                     document.body.appendChild(iframe);
                 }
@@ -276,7 +268,6 @@
                     setTimeout(() => {
                         iframe.contentWindow.focus();
                         iframe.contentWindow.print();
-                        // 인쇄창 뜨면 진행바 숨김
                         setTimeout(() => {
                             progressContainer.style.display = 'none';
                             progressText.style.display = 'none';
@@ -286,11 +277,10 @@
                 };
 
             } catch (err) {
-                alert("오류가 발생했습니다: " + err.message);
-                console.error(err);
+                alert("오류: " + err.message);
             } finally {
                 printBtn.disabled = false;
-                printBtn.innerHTML = '<i data-lucide="printer"></i> 일괄 인쇄 시작';
+                printBtn.innerHTML = '<i data-lucide="printer"></i> 일괄 인쇄';
                 lucide.createIcons();
             }
         }
