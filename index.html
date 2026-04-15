@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF 일괄 인쇄 - A4 최적화 버전</title>
+    <title>PDF 일괄 인쇄 - 최종형</title>
     <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -18,12 +18,10 @@
         .logo { display: flex; align-items: center; gap: 12px; font-size: 1.5rem; font-weight: 700; }
         main { width: 100%; max-width: 800px; padding: 20px; box-sizing: border-box; flex-grow: 1; }
         .controls { display: flex; gap: 12px; margin-bottom: 30px; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); align-items: center; }
-        button { cursor: pointer; border: none; border-radius: 6px; padding: 10px 20px; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        button { cursor: pointer; border: none; border-radius: 6px; padding: 10px 24px; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
         .btn-load { background-color: var(--text-color); color: var(--bg-color); }
         .btn-print { background-color: var(--accent-color); color: white; margin-left: auto; }
         .btn-print:disabled { background-color: #444; color: #888; cursor: not-allowed; }
-        .copy-input-group { display: flex; align-items: center; gap: 8px; background: #2a2a2a; padding: 0 12px; border-radius: 6px; border: 1px solid var(--border-color); }
-        input[type="number"] { background: transparent; border: none; color: white; width: 45px; padding: 10px 0; text-align: center; font-size: 1rem; outline: none; }
         #file-list { list-style: none; padding: 0; margin: 0; }
         .file-item { background: var(--card-bg); margin-bottom: 10px; padding: 15px; border-radius: 8px; display: flex; align-items: center; border: 1px solid var(--border-color); }
         .handle { cursor: grab; margin-right: 15px; color: #666; }
@@ -48,13 +46,8 @@
             </button>
             <input type="file" id="file-input" multiple accept=".pdf">
 
-            <div class="copy-input-group">
-                <label style="font-size:0.8rem; color:#888;">매수</label>
-                <input type="number" id="copy-count" value="1" min="1" onfocus="if(this.value=='1')this.value=''">
-            </div>
-
             <button class="btn-print" id="print-btn" onclick="processAndPrint()" disabled>
-                <i data-lucide="layers"></i> 일괄 인쇄 시작
+                <i data-lucide="printer"></i> 일괄 인쇄 시작
             </button>
         </div>
         <ul id="file-list"></ul>
@@ -115,7 +108,7 @@
         }
 
         async function processAndPrint() {
-            log("인쇄 준비 중 (A4 최적화 모드)...");
+            log("병합 작업 시작 (A4 최적화)...");
             printBtn.disabled = true;
             printBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> 처리 중...';
             lucide.createIcons();
@@ -126,13 +119,13 @@
                 const A4_HEIGHT = 841.89;
                 
                 for (const fileObj of selectedFiles) {
-                    log(`${fileObj.data.name} 렌더링...`);
+                    log(`${fileObj.data.name} 렌더링 중...`);
                     const arrayBuffer = await fileObj.data.arrayBuffer();
                     const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
                     
                     for (let i = 1; i <= pdf.numPages; i++) {
                         const page = await pdf.getPage(i);
-                        const viewport = page.getViewport({scale: 2.5}); // 고해상도 유지
+                        const viewport = page.getViewport({scale: 2.5}); // 고해상도
                         
                         const canvas = document.createElement('canvas');
                         const context = canvas.getContext('2d');
@@ -141,45 +134,27 @@
 
                         await page.render({canvasContext: context, viewport: viewport}).promise;
                         
-                        const imgDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                        const imgDataUrl = canvas.toDataURL('image/jpeg', 0.92);
                         const imgBytes = await fetch(imgDataUrl).then(res => res.arrayBuffer());
                         const img = await mergedPdf.embedJpg(imgBytes);
                         
-                        // 모든 페이지를 표준 A4 크기로 생성
                         const newPage = mergedPdf.addPage([A4_WIDTH, A4_HEIGHT]);
-                        
-                        // 이미지를 A4 크기에 맞춰 비율 유지하며 그리기
-                        newPage.drawImage(img, {
-                            x: 0,
-                            y: 0,
-                            width: A4_WIDTH,
-                            height: A4_HEIGHT
-                        });
+                        newPage.drawImage(img, { x: 0, y: 0, width: A4_WIDTH, height: A4_HEIGHT });
                     }
+                    log(`${fileObj.data.name} 병합 완료`);
                 }
 
-                const copyCount = parseInt(document.getElementById('copy-count').value) || 1;
-                const finalPdf = await PDFLib.PDFDocument.create();
-                const mergedPagesIndices = mergedPdf.getPageIndices();
-                for (let i = 0; i < copyCount; i++) {
-                    const pages = await finalPdf.copyPages(mergedPdf, mergedPagesIndices);
-                    pages.forEach(p => finalPdf.addPage(p));
-                }
-
-                const pdfBytes = await finalPdf.save();
+                const pdfBytes = await mergedPdf.save();
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
                 
-                log("인쇄 창을 호출합니다.");
+                log("인쇄창을 호출합니다. 잠시만 기다려 주세요.");
 
-                // iframe을 통한 직접 인쇄 연결
                 let iframe = document.getElementById('print-iframe');
                 if (!iframe) {
                     iframe = document.createElement('iframe');
                     iframe.id = 'print-iframe';
                     iframe.style.position = 'fixed';
-                    iframe.style.right = '0';
-                    iframe.style.bottom = '0';
                     iframe.style.width = '0';
                     iframe.style.height = '0';
                     iframe.style.border = 'none';
@@ -191,7 +166,7 @@
                     setTimeout(() => {
                         iframe.contentWindow.focus();
                         iframe.contentWindow.print();
-                        log("인쇄 완료 후 메모리 정리 중...");
+                        log("인쇄 명령 완료.");
                     }, 500);
                 };
 
@@ -199,7 +174,7 @@
                 log(`<span style="color:red;">오류: ${err.message}</span>`);
             } finally {
                 printBtn.disabled = false;
-                printBtn.innerHTML = '<i data-lucide="layers"></i> 일괄 인쇄 시작';
+                printBtn.innerHTML = '<i data-lucide="printer"></i> 일괄 인쇄 시작';
                 lucide.createIcons();
             }
         }
