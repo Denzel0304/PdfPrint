@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF 일괄 인쇄 - 최종 완성</title>
+    <title>PDF 일괄 인쇄 - A4 최적화 버전</title>
     <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -60,7 +60,7 @@
         <ul id="file-list"></ul>
     </main>
 
-    <div id="debug-console">--- 시스템 로그 대기 중 (최종 최적화 모드) ---</div>
+    <div id="debug-console">--- 시스템 로그 대기 중 ---</div>
 
     <script>
         lucide.createIcons();
@@ -84,7 +84,6 @@
             onEnd: () => {
                 const newOrder = Array.from(fileListElement.children).map(li => li.getAttribute('data-id'));
                 selectedFiles.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
-                log("순서 변경 완료");
             }
         });
 
@@ -116,24 +115,24 @@
         }
 
         async function processAndPrint() {
-            log("인쇄 프로세스 시작 (이미지 렌더링 방식)...");
+            log("인쇄 준비 중 (A4 최적화 모드)...");
             printBtn.disabled = true;
-            printBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> 페이지 그리는 중...';
+            printBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> 처리 중...';
             lucide.createIcons();
 
             try {
-                // 1. 모든 페이지를 이미지로 렌더링하여 임시 PDF 생성
                 const mergedPdf = await PDFLib.PDFDocument.create();
+                const A4_WIDTH = 595.28;
+                const A4_HEIGHT = 841.89;
                 
                 for (const fileObj of selectedFiles) {
-                    log(`${fileObj.data.name} 처리 중...`);
+                    log(`${fileObj.data.name} 렌더링...`);
                     const arrayBuffer = await fileObj.data.arrayBuffer();
-                    const loadingTask = pdfjsLib.getDocument({data: arrayBuffer});
-                    const pdf = await loadingTask.promise;
+                    const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
                     
                     for (let i = 1; i <= pdf.numPages; i++) {
                         const page = await pdf.getPage(i);
-                        const viewport = page.getViewport({scale: 2.0}); // 고품질 2배율
+                        const viewport = page.getViewport({scale: 2.5}); // 고해상도 유지
                         
                         const canvas = document.createElement('canvas');
                         const context = canvas.getContext('2d');
@@ -142,23 +141,24 @@
 
                         await page.render({canvasContext: context, viewport: viewport}).promise;
                         
-                        // 이미지를 JPEG 바이너리로 변환
                         const imgDataUrl = canvas.toDataURL('image/jpeg', 0.9);
                         const imgBytes = await fetch(imgDataUrl).then(res => res.arrayBuffer());
-                        
-                        // 수정된 부분: embedJpg 사용
                         const img = await mergedPdf.embedJpg(imgBytes);
                         
-                        const newPage = mergedPdf.addPage([viewport.width, viewport.height]);
-                        newPage.drawImage(img, { x: 0, y: 0, width: viewport.width, height: viewport.height });
+                        // 모든 페이지를 표준 A4 크기로 생성
+                        const newPage = mergedPdf.addPage([A4_WIDTH, A4_HEIGHT]);
+                        
+                        // 이미지를 A4 크기에 맞춰 비율 유지하며 그리기
+                        newPage.drawImage(img, {
+                            x: 0,
+                            y: 0,
+                            width: A4_WIDTH,
+                            height: A4_HEIGHT
+                        });
                     }
-                    log(`${fileObj.data.name} 완료`);
                 }
 
-                // 2. 인쇄 매수 적용
                 const copyCount = parseInt(document.getElementById('copy-count').value) || 1;
-                log(`최종 문서 생성 (매수: ${copyCount})...`);
-                
                 const finalPdf = await PDFLib.PDFDocument.create();
                 const mergedPagesIndices = mergedPdf.getPageIndices();
                 for (let i = 0; i < copyCount; i++) {
@@ -170,13 +170,33 @@
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
                 
-                log("인쇄 준비 완료. 새 창을 확인하세요.");
-                window.open(url, '_blank');
-                setTimeout(() => URL.revokeObjectURL(url), 60000);
+                log("인쇄 창을 호출합니다.");
+
+                // iframe을 통한 직접 인쇄 연결
+                let iframe = document.getElementById('print-iframe');
+                if (!iframe) {
+                    iframe = document.createElement('iframe');
+                    iframe.id = 'print-iframe';
+                    iframe.style.position = 'fixed';
+                    iframe.style.right = '0';
+                    iframe.style.bottom = '0';
+                    iframe.style.width = '0';
+                    iframe.style.height = '0';
+                    iframe.style.border = 'none';
+                    document.body.appendChild(iframe);
+                }
+                
+                iframe.src = url;
+                iframe.onload = function() {
+                    setTimeout(() => {
+                        iframe.contentWindow.focus();
+                        iframe.contentWindow.print();
+                        log("인쇄 완료 후 메모리 정리 중...");
+                    }, 500);
+                };
 
             } catch (err) {
                 log(`<span style="color:red;">오류: ${err.message}</span>`);
-                console.error(err);
             } finally {
                 printBtn.disabled = false;
                 printBtn.innerHTML = '<i data-lucide="layers"></i> 일괄 인쇄 시작';
