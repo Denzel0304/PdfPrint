@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF 일괄 인쇄 - 디버그 모드</title>
+    <title>PDF 일괄 인쇄 - 최종 수정본</title>
     <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -13,7 +13,6 @@
             --card-bg: #1e1e1e;
             --text-color: #e0e0e0;
             --accent-color: #3d5afe;
-            --accent-hover: #536dfe;
             --border-color: #333;
             --debug-bg: #0a0a0a;
         }
@@ -43,13 +42,8 @@
         main { width: 100%; max-width: 800px; padding: 20px; box-sizing: border-box; flex-grow: 1; }
 
         .controls {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 30px;
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
+            display: flex; gap: 12px; margin-bottom: 30px; background: var(--card-bg);
+            padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);
             align-items: center;
         }
 
@@ -83,7 +77,6 @@
         .file-info { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .btn-remove { background: transparent; color: #ff5252; padding: 5px; }
 
-        /* 디버그 로그 영역 */
         #debug-console {
             width: 100%; max-width: 800px; background: var(--debug-bg);
             border-top: 2px solid var(--border-color); color: #00ff00;
@@ -129,7 +122,9 @@
         const logger = document.getElementById('debug-console');
         function log(msg) {
             const now = new Date();
-            const time = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
+            const time = now.getHours().toString().padStart(2, '0') + ":" + 
+                         now.getMinutes().toString().padStart(2, '0') + ":" + 
+                         now.getSeconds().toString().padStart(2, '0');
             logger.innerHTML += `<div>[${time}] ${msg}</div>`;
             logger.scrollTop = logger.scrollHeight;
         }
@@ -189,27 +184,20 @@
             lucide.createIcons();
 
             try {
-                // 1. PDFLib 로딩 확인
-                if (typeof PDFLib === 'undefined') {
-                    throw new Error("PDF-Lib 라이브러리가 로드되지 않았습니다. 인터넷 연결을 확인하세요.");
-                }
-                log("PDF-Lib 라이브러리 확인 완료");
-
-                // 2. 병합용 문서 생성
                 const mergedPdf = await PDFLib.PDFDocument.create();
-                log("새 병합 문서 생성됨");
-
-                // 3. 파일 병합 루프
+                
                 for (const fileObj of selectedFiles) {
                     log(`파일 읽는 중: ${fileObj.data.name}`);
                     const arrayBuffer = await fileObj.data.arrayBuffer();
-                    const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
+                    
+                    // 핵심 수정: { ignoreEncryption: true } 옵션 추가
+                    const pdf = await PDFLib.PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+                    
                     const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
                     pages.forEach(page => mergedPdf.addPage(page));
                     log(`${fileObj.data.name} 병합 성공`);
                 }
 
-                // 4. 인쇄 매수 처리
                 const copyCount = parseInt(document.getElementById('copy-count').value) || 1;
                 log(`인쇄 매수 설정: ${copyCount}매`);
                 
@@ -219,15 +207,12 @@
                     const pages = await finalPdf.copyPages(mergedPdf, mergedPages);
                     pages.forEach(p => finalPdf.addPage(p));
                 }
-                log("최종 병합 및 매수 복제 완료");
 
-                // 5. 바이너리 저장 및 출력
                 const pdfBytes = await finalPdf.save();
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
-                log("임시 URL 생성 완료. 인쇄창 호출 시도...");
+                log("최종 병합 완료. 인쇄창 호출 중...");
 
-                // 6. iframe 출력 방식 (가장 안정적)
                 let iframe = document.getElementById('print-iframe');
                 if (!iframe) {
                     iframe = document.createElement('iframe');
@@ -238,21 +223,15 @@
                 
                 iframe.src = url;
                 iframe.onload = function() {
-                    log("인쇄 데이터 로드 완료. 인쇄 명령 실행.");
+                    log("인쇄 데이터 로딩 완료.");
                     iframe.contentWindow.focus();
                     iframe.contentWindow.print();
-                    
-                    // 메모리 해제 지연
-                    setTimeout(() => {
-                        URL.revokeObjectURL(url);
-                        log("메모리 해제 완료");
-                    }, 5000);
+                    setTimeout(() => URL.revokeObjectURL(url), 10000);
                 };
 
             } catch (err) {
                 log(`<span style="color:red;">오류 발생: ${err.message}</span>`);
-                console.error(err);
-                alert("오류가 발생했습니다. 하단 로그를 확인하세요.");
+                alert("오류가 발생했습니다. 로그를 확인하세요.");
             } finally {
                 printBtn.disabled = false;
                 printBtn.innerHTML = '<i data-lucide="layers"></i> 일괄 인쇄 시작';
