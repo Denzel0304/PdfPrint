@@ -3,87 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF 일괄 인쇄 - 백지 해결 판</title>
+    <title>PDF 일괄 인쇄 - 완전 해결판</title>
     <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #e0e0e0;
-            --accent-color: #3d5afe;
-            --border-color: #333;
-            --debug-bg: #0a0a0a;
+            --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #e0e0e0;
+            --accent-color: #3d5afe; --border-color: #333; --debug-bg: #0a0a0a;
         }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Pretendard', sans-serif;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        header {
-            width: 100%;
-            max-width: 800px;
-            padding: 40px 20px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
+        body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Pretendard', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        header { width: 100%; max-width: 800px; padding: 40px 20px 20px; display: flex; justify-content: space-between; align-items: center; }
         .logo { display: flex; align-items: center; gap: 12px; font-size: 1.5rem; font-weight: 700; }
-
         main { width: 100%; max-width: 800px; padding: 20px; box-sizing: border-box; flex-grow: 1; }
-
-        .controls {
-            display: flex; gap: 12px; margin-bottom: 30px; background: var(--card-bg);
-            padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);
-            align-items: center;
-        }
-
-        button {
-            cursor: pointer; border: none; border-radius: 6px; padding: 10px 20px;
-            font-weight: 600; display: flex; align-items: center; gap: 8px; transition: all 0.2s;
-        }
-
+        .controls { display: flex; gap: 12px; margin-bottom: 30px; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); align-items: center; }
+        button { cursor: pointer; border: none; border-radius: 6px; padding: 10px 20px; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
         .btn-load { background-color: var(--text-color); color: var(--bg-color); }
         .btn-print { background-color: var(--accent-color); color: white; margin-left: auto; }
         .btn-print:disabled { background-color: #444; color: #888; cursor: not-allowed; }
-
-        .copy-input-group {
-            display: flex; align-items: center; gap: 8px; background: #2a2a2a;
-            padding: 0 12px; border-radius: 6px; border: 1px solid var(--border-color);
-        }
-
-        input[type="number"] {
-            background: transparent; border: none; color: white; width: 45px;
-            padding: 10px 0; text-align: center; font-size: 1rem; outline: none;
-        }
-
+        .copy-input-group { display: flex; align-items: center; gap: 8px; background: #2a2a2a; padding: 0 12px; border-radius: 6px; border: 1px solid var(--border-color); }
+        input[type="number"] { background: transparent; border: none; color: white; width: 45px; padding: 10px 0; text-align: center; font-size: 1rem; outline: none; }
         #file-list { list-style: none; padding: 0; margin: 0; }
-        .file-item {
-            background: var(--card-bg); margin-bottom: 10px; padding: 15px;
-            border-radius: 8px; display: flex; align-items: center;
-            border: 1px solid var(--border-color);
-        }
-
+        .file-item { background: var(--card-bg); margin-bottom: 10px; padding: 15px; border-radius: 8px; display: flex; align-items: center; border: 1px solid var(--border-color); }
         .handle { cursor: grab; margin-right: 15px; color: #666; }
         .file-info { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .btn-remove { background: transparent; color: #ff5252; padding: 5px; }
-
-        #debug-console {
-            width: 100%; max-width: 800px; background: var(--debug-bg);
-            border-top: 2px solid var(--border-color); color: #00ff00;
-            font-family: monospace; font-size: 12px; padding: 15px;
-            height: 150px; overflow-y: auto; box-sizing: border-box; margin-top: 20px;
-        }
-
+        #debug-console { width: 100%; max-width: 800px; background: var(--debug-bg); border-top: 2px solid var(--border-color); color: #00ff00; font-family: monospace; font-size: 12px; padding: 15px; height: 180px; overflow-y: auto; box-sizing: border-box; margin-top: 20px; }
         #file-input { display: none; }
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -111,20 +57,19 @@
                 <i data-lucide="layers"></i> 일괄 인쇄 시작
             </button>
         </div>
-
         <ul id="file-list"></ul>
     </main>
 
-    <div id="debug-console">--- 시스템 로그 대기 중 ---</div>
+    <div id="debug-console">--- 시스템 로그 대기 중 (이미지 렌더링 모드) ---</div>
 
     <script>
         lucide.createIcons();
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
         const logger = document.getElementById('debug-console');
         function log(msg) {
             const now = new Date();
-            const time = now.getHours().toString().padStart(2, '0') + ":" + 
-                         now.getMinutes().toString().padStart(2, '0') + ":" + 
-                         now.getSeconds().toString().padStart(2, '0');
+            const time = now.toTimeString().split(' ')[0];
             logger.innerHTML += `<div>[${time}] ${msg}</div>`;
             logger.scrollTop = logger.scrollHeight;
         }
@@ -139,16 +84,14 @@
             onEnd: () => {
                 const newOrder = Array.from(fileListElement.children).map(li => li.getAttribute('data-id'));
                 selectedFiles.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
-                log("파일 순서 재정렬됨");
+                log("순서 변경 완료");
             }
         });
 
         fileInput.addEventListener('change', (e) => {
             const files = Array.from(e.target.files);
-            log(`${files.length}개의 파일 선택됨`);
             files.forEach(file => {
-                const id = Math.random().toString(36).substr(2, 9);
-                selectedFiles.push({ id, data: file });
+                selectedFiles.push({ id: Math.random().toString(36).substr(2, 9), data: file });
             });
             renderList();
             fileInput.value = '';
@@ -156,15 +99,11 @@
 
         function renderList() {
             fileListElement.innerHTML = '';
-            selectedFiles.forEach((fileObj) => {
+            selectedFiles.forEach(f => {
                 const li = document.createElement('li');
                 li.className = 'file-item';
-                li.setAttribute('data-id', fileObj.id);
-                li.innerHTML = `
-                    <div class="handle"><i data-lucide="menu"></i></div>
-                    <div class="file-info">${fileObj.data.name}</div>
-                    <button class="btn-remove" onclick="removeFile('${fileObj.id}')"><i data-lucide="x"></i></button>
-                `;
+                li.setAttribute('data-id', f.id);
+                li.innerHTML = `<div class="handle"><i data-lucide="menu"></i></div><div class="file-info">${f.data.name}</div><button class="btn-remove" onclick="removeFile('${f.id}')"><i data-lucide="x"></i></button>`;
                 fileListElement.appendChild(li);
             });
             lucide.createIcons();
@@ -174,48 +113,50 @@
         function removeFile(id) {
             selectedFiles = selectedFiles.filter(f => f.id !== id);
             renderList();
-            log("파일 제거됨");
         }
 
         async function processAndPrint() {
-            log("인쇄 프로세스 시작 (백지 방지 로직 가동)...");
+            log("강제 렌더링 인쇄 시작... (보안 무력화 시도)");
             printBtn.disabled = true;
-            printBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> 병합 및 렌더링 중...';
+            printBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> 페이지 그리는 중...';
             lucide.createIcons();
 
             try {
-                // 1. 결과물이 담길 메인 문서
                 const mergedPdf = await PDFLib.PDFDocument.create();
                 
                 for (const fileObj of selectedFiles) {
-                    log(`${fileObj.data.name} 읽는 중...`);
+                    log(`${fileObj.data.name} 분석 중...`);
                     const arrayBuffer = await fileObj.data.arrayBuffer();
+                    const loadingTask = pdfjsLib.getDocument({data: arrayBuffer});
+                    const pdf = await loadingTask.promise;
                     
-                    // 암호화 무시 로드
-                    const srcDoc = await PDFLib.PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
-                    
-                    // 핵심: copyPages 대신 임베드 방식을 시도 (임베딩이 복제 제한에 더 강함)
-                    const pagesIndices = srcDoc.getPageIndices();
-                    
-                    // 소스 문서의 페이지들을 '임베딩 가능한 객체'로 변환
-                    const embeddedPages = await mergedPdf.embedPdf(srcDoc, pagesIndices);
-                    
-                    embeddedPages.forEach((embeddedPage, i) => {
-                        const { width, height } = embeddedPage.scale(1);
-                        const page = mergedPdf.addPage([width, height]);
-                        // 페이지 위에 임베드된 내용을 직접 그림
-                        page.drawPage(embeddedPage, { x: 0, y: 0, width, height });
-                    });
-                    
-                    log(`${fileObj.data.name} 병합 성공`);
+                    log(`${fileObj.data.name}: 총 ${pdf.numPages}페이지 추출 시작`);
+
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const viewport = page.getViewport({scale: 2.0}); // 고화질을 위해 2배 확대 렌더링
+                        
+                        const canvas = document.createElement('canvas');
+                        const context = canvas.getContext('2d');
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+
+                        await page.render({canvasContext: context, viewport: viewport}).promise;
+                        
+                        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                        const img = await mergedPdf.embedImg(imgData);
+                        
+                        const newPage = mergedPdf.addPage([viewport.width, viewport.height]);
+                        newPage.drawImage(img, { x: 0, y: 0, width: viewport.width, height: viewport.height });
+                    }
+                    log(`${fileObj.data.name} 처리 완료`);
                 }
 
                 const copyCount = parseInt(document.getElementById('copy-count').value) || 1;
-                log(`최종 문서 생성 중 (인쇄 매수: ${copyCount})...`);
+                log(`최종 병합 및 매수(${copyCount}) 적용 중...`);
                 
                 const finalPdf = await PDFLib.PDFDocument.create();
                 const mergedPagesIndices = mergedPdf.getPageIndices();
-                
                 for (let i = 0; i < copyCount; i++) {
                     const pages = await finalPdf.copyPages(mergedPdf, mergedPagesIndices);
                     pages.forEach(p => finalPdf.addPage(p));
@@ -225,22 +166,13 @@
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
                 
-                log("병합 완료! PDF 뷰어를 호출합니다.");
-
-                const win = window.open(url, '_blank');
-                if (!win) {
-                    log("<span style='color:orange;'>팝업 차단됨.</span>");
-                    alert("팝업을 허용해주세요.");
-                } else {
-                    log("새 탭에서 내용을 확인하고 인쇄하세요.");
-                }
-
+                log("모든 과정 완료! 새 창에서 내용을 확인하세요.");
+                window.open(url, '_blank');
                 setTimeout(() => URL.revokeObjectURL(url), 60000);
 
             } catch (err) {
-                log(`<span style="color:red;">오류: ${err.message}</span>`);
-                console.error(err);
-                alert("처리 중 오류가 발생했습니다.");
+                log(`<span style="color:red;">치명적 오류: ${err.message}</span>`);
+                alert("인쇄 실패. 로그를 확인하세요.");
             } finally {
                 printBtn.disabled = false;
                 printBtn.innerHTML = '<i data-lucide="layers"></i> 일괄 인쇄 시작';
