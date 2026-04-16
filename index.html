@@ -10,13 +10,14 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #e0e0e0;
-            --accent-color: #3d5afe;
-            --pastel-green: #77dd77;
-            --reset-color: #ff6961;
-            --border-color: #333;
+            /* 라이트 모드 색상 테마로 변경 */
+            --bg-color: #f4f4f7; /* 배경색: 밝은 회색 */
+            --card-bg: #ffffff; /* 카드 배경: 흰색 */
+            --text-color: #333333; /* 기본 텍스트: 짙은 회색 */
+            --accent-color: #3d5afe; /* 강조 색상: 유지 (파란색) */
+            --pastel-green: #a5d6a7; /* 불러오기 버튼 배경: 더 연한 파스텔 그린 */
+            --reset-color: #ef5350; /* 초기화 버튼 색상: 약간 더 밝은 빨강 */
+            --border-color: #e0e0e0; /* 테두리: 밝은 회색 */
         }
 
         body {
@@ -39,7 +40,8 @@
             justify-content: center;
             align-items: center;
         }
-        .logo { display: flex; align-items: center; gap: 12px; font-size: 1.5rem; font-weight: 700; color: #fff; }
+        /* 로고 텍스트 색상 변경 (라이트 모드 대응) */
+        .logo { display: flex; align-items: center; gap: 12px; font-size: 1.5rem; font-weight: 700; color: #1a1a1a; }
 
         main { width: 100%; max-width: 800px; padding: 20px; box-sizing: border-box; }
 
@@ -47,7 +49,7 @@
         .progress-container {
             width: 100%;
             height: 4px;
-            background: #2a2a2a;
+            background: #e0e0e0; /* 진행바 배경색 변경 (라이트 모드) */
             border-radius: 10px;
             margin-bottom: 20px;
             overflow: hidden;
@@ -78,6 +80,7 @@
             padding: 15px;
             border-radius: 12px;
             border: 1px solid var(--border-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0,05); /* 약간의 그림자 추가로 입체감 부여 */
         }
 
         button {
@@ -86,11 +89,20 @@
             gap: 8px; transition: all 0.2s; font-size: 0.9rem; white-space: nowrap;
         }
 
+        /* 버튼 호버 효과 추가 */
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
         .btn-load { background-color: var(--pastel-green); color: #1a3d1a; }
         .btn-reset { background-color: transparent; color: var(--reset-color); border: 1px solid var(--reset-color); }
+        .btn-reset:hover { background-color: #fff5f5; } /* 초기화 호버 배경 */
+        
         /* 3. 버튼 명칭 변경 */
         .btn-print { background-color: var(--accent-color); color: white; }
-        .btn-print:disabled { background-color: #444; color: #888; cursor: not-allowed; }
+        /* 비활성화 버튼 스타일 변경 */
+        .btn-print:disabled { background-color: #d1d1d1; color: #757575; cursor: not-allowed; transform: none; box-shadow: none; }
 
         /* 4. 파일 목록 높이 최적화 */
         #file-list { list-style: none; padding: 0; margin: 0; }
@@ -99,19 +111,22 @@
             border-radius: 8px; display: flex; align-items: center;
             border: 1px solid var(--border-color);
             min-height: 40px; /* 동적 높이를 위해 최소 높이만 지정 */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03); /* 목록 아이템에도 약한 그림자 */
         }
 
-        .handle { cursor: grab; margin-right: 12px; color: #444; display: flex; align-items: center; }
+        /* 핸들 및 정보 색상 변경 */
+        .handle { cursor: grab; margin-right: 12px; color: #9e9e9e; display: flex; align-items: center; }
         .file-info { 
             flex-grow: 1; 
             font-size: 0.85rem; 
             line-height: 1.4;
             word-break: break-all;
-            color: #bbb;
+            color: #555; /* 파일명 색상 변경 */
             padding-right: 10px;
         }
-        .btn-remove { background: transparent; color: #555; padding: 4px; cursor: pointer; border: none; }
-        .btn-remove:hover { color: var(--reset-color); }
+        /* 삭제 버튼 색상 변경 */
+        .btn-remove { background: transparent; color: #bdbdbd; padding: 4px; cursor: pointer; border: none; }
+        .btn-remove:hover { color: var(--reset-color); background: none; transform: none; }
 
         #file-input { display: none; }
         .spin { animation: spin 1s linear infinite; }
@@ -149,6 +164,7 @@
     </main>
 
     <script>
+        // 로직 작동 방식은 절대 손대지 않았습니다.
         lucide.createIcons();
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
