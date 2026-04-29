@@ -123,7 +123,7 @@
 <body>
 
     <header>
-        <div class="logo"><i data-lucide="printer"></i> PDF 일괄 인쇄</div>
+        <div class="logo"><i data-lucide="printer"></i> PDF 일괄 인쇄/저장</div>
     </header>
 
     <main>
@@ -143,7 +143,7 @@
             </button>
 
             <button class="btn-print" id="print-btn" onclick="processAndPrint()" disabled>
-                <i data-lucide="printer"></i> 일괄 인쇄
+                <i data-lucide="printer"></i> 일괄 인쇄/저장
             </button>
         </div>
 
@@ -287,7 +287,7 @@
                 alert("오류: " + err.message);
             } finally {
                 printBtn.disabled = false;
-                printBtn.innerHTML = '<i data-lucide="printer"></i> 일괄 인쇄';
+                printBtn.innerHTML = '<i data-lucide="printer"></i> 일괄 인쇄/저장';
                 lucide.createIcons();
             }
         }
